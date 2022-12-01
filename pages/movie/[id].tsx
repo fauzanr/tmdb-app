@@ -25,6 +25,16 @@ const ImageContainer = styled.div`
   position: relative;
 `;
 
+const OverflowShadow = styled.div`
+  position: absolute;
+  top: 0;
+  right: -6px;
+  bottom: 0;
+  width: 15px;
+  pointer-events: none;
+  box-shadow: inset -10px 0px 15px -10px #adaaaa;
+`;
+
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   // @ts-expect-error: property does not exist
   const { id } = params;
@@ -108,28 +118,36 @@ const MovieDetail = ({ movie }: { movie: Movie }) => {
       <Text h2 mb={1}>
         Casts
       </Text>
-      <Grid.Container wrap="wrap" gap={1} mb={2}>
-        {movie.credits?.cast?.slice(0, 10).map((cast) => (
-          <Grid style={{ overflow: "hidden", width: 180 }}>
-            <ImageContainer>
-              <Image
-                src={IMAGE_URL(cast.profile_path)}
-                placeholder="blur"
-                blurDataURL={blurDataUrl()}
-                width={180}
-                height={240}
-                objectFit="cover"
-                alt={cast.name}
-                style={{ borderRadius: 8, maxWidth: "100%" }}
-              />
-            </ImageContainer>
-            <Text>{cast.name}</Text>
-            <Text type="secondary" small>
-              {cast.character}
-            </Text>
-          </Grid>
-        ))}
-      </Grid.Container>
+      <div style={{ position: "relative" }}>
+        <Grid.Container
+          wrap="nowrap"
+          gap={1}
+          mb={2}
+          style={{ overflow: "auto" }}
+        >
+          {movie.credits?.cast?.slice(0, 10).map((cast) => (
+            <Grid>
+              <ImageContainer>
+                <Image
+                  src={IMAGE_URL(cast.profile_path)}
+                  placeholder="blur"
+                  blurDataURL={blurDataUrl()}
+                  width={180}
+                  height={240}
+                  objectFit="cover"
+                  alt={cast.name}
+                  style={{ borderRadius: 8 }}
+                />
+              </ImageContainer>
+              <Text>{cast.name}</Text>
+              <Text type="secondary" small>
+                {cast.character}
+              </Text>
+            </Grid>
+          ))}
+        </Grid.Container>
+        <OverflowShadow />
+      </div>
 
       {movie.videos?.results?.length > 0 && (
         <>
