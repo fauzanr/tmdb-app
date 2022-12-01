@@ -29,6 +29,7 @@ export const DISCOVER_URL = (page = 1, sortBy: string) =>
     page,
     sort_by: sortBy,
   });
-export const MOVIE_URL = (id: string | number) => createURL(`/3/movie/${id}`);
+export const MOVIE_URL = (id: string | number) =>
+  createURL(`/3/movie/${id}`, { append_to_response: "videos,credits" });
 export const IMAGE_URL = (imgPath?: string | null) =>
   imgPath ? `${IMG_BASE_URL}/w300${imgPath}` : posterFallbackPath;

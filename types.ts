@@ -3,6 +3,22 @@ export interface Movie {
   backdrop_path: string | null;
   belongs_to_collection: null;
   budget: number;
+  credits: {
+    cast: Array<{
+      adult: boolean;
+      gender: number;
+      id: number;
+      known_for_department: string;
+      name: string;
+      original_name: string;
+      popularity: number;
+      profile_path: string;
+      cast_id: number;
+      character: string;
+      credit_id: string;
+      order: number;
+    }>;
+  };
   genres: Array<{
     id: number;
     name: string;
@@ -15,7 +31,7 @@ export interface Movie {
   overview: string;
   popularity: number;
   poster_path: string | null;
-  production_companies: object[];
+  production_companies: Array<{ id: number; name: string }>;
   production_countries: object[];
   release_date: string;
   revenue: number;
@@ -31,6 +47,20 @@ export interface Movie {
   tagline: string;
   title: string;
   video: boolean;
+  videos: {
+    results: Array<{
+      iso_639_1: string;
+      iso_3166_1: string;
+      name: string;
+      key: string;
+      site: string;
+      size: number;
+      type: string;
+      official: true;
+      published_at: string;
+      id: string;
+    }>;
+  };
   vote_average: number;
   vote_count: number;
 }

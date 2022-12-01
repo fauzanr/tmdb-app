@@ -29,3 +29,11 @@ export const Container = styled.div`
   max-width: 1500px;
   text-align: ${({ center }) => (center ? "center" : "left")};
 `;
+
+export const PosterCover = styled.div`
+  flex: auto;
+  width: 100%;
+  background: #ababab;
+  position: relative;
+  aspect-ratio: 6 / 9;
+`;

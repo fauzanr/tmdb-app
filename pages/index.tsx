@@ -11,22 +11,22 @@ import {
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import useSWR, { SWRConfig } from "swr";
 import { IMAGE_URL, MOVIES_URL } from "../api";
-import { Card, Container, Grid as GridContainer } from "../components/styled";
+import {
+  Card,
+  Container,
+  Grid as GridContainer,
+  PosterCover,
+} from "../components/styled";
+import { blurDataUrl } from "../config";
 import { MovieListTypes, MovieRecord, PaginationResponse } from "../types";
 
 const CardRelative = styled(Card)`
   position: relative;
-`;
-
-const PosterCover = styled.div`
-  flex: none;
-  background: #ababab;
-  position: relative;
-  aspect-ratio: 6 / 9;
 `;
 
 const BlurBg = styled.div`
@@ -160,38 +160,45 @@ const Home = () => {
             <>
               <GridContainer>
                 {movies?.results.map((movie) => (
-                  <CardRelative
+                  <Link
+                    href={`/movie/${movie.id}`}
                     key={`${movie.id}_${movie.title}`}
-                    onMouseEnter={() => setHoverId(movie.id)}
-                    onMouseLeave={() => setHoverId(null)}
                   >
-                    <PosterCover>
+                    <CardRelative
+                      onMouseEnter={() => setHoverId(movie.id)}
+                      onMouseLeave={() => setHoverId(null)}
+                    >
+                      <PosterCover></PosterCover>
                       <Image
                         src={IMAGE_URL(
                           movie.poster_path || movie.backdrop_path
                         )}
+                        placeholder="blur"
+                        blurDataURL={blurDataUrl()}
                         fill
                         objectFit="cover"
                         alt={movie.title}
                       />
-                    </PosterCover>
-                    <BlurBg data-active={hoverId === movie.id}>
-                      <Text b>{movie.title}</Text>
-                      <Text small>{movie.release_date}</Text>
-                      <Grid.Container gap={1} wrap="nowrap" mt={1}>
-                        <Grid>
-                          <Rating
-                            locked={true}
-                            value={Math.ceil(movie.vote_average) / 2}
-                            type="warning"
-                          />
-                        </Grid>
-                        <Grid>
-                          <Badge type="secondary">{movie.vote_average}</Badge>
-                        </Grid>
-                      </Grid.Container>
-                    </BlurBg>
-                  </CardRelative>
+                      <BlurBg data-active={hoverId === movie.id}>
+                        <Text b>{movie.title}</Text>
+                        <Text small>
+                          {new Date(movie.release_date).getFullYear()}
+                        </Text>
+                        <Grid.Container gap={1} wrap="nowrap" mt={1}>
+                          <Grid>
+                            <Rating
+                              locked={true}
+                              value={Math.ceil(movie.vote_average) / 2}
+                              type="warning"
+                            />
+                          </Grid>
+                          <Grid>
+                            <Badge type="secondary">{movie.vote_average}</Badge>
+                          </Grid>
+                        </Grid.Container>
+                      </BlurBg>
+                    </CardRelative>
+                  </Link>
                 ))}
               </GridContainer>
 
