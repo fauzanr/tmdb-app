@@ -1,4 +1,5 @@
 import styled from "@emotion/styled";
+import CustomTheme from "../../config/theme";
 
 export const Card = styled.div`
   display: flex;
@@ -18,7 +19,8 @@ export const Grid = styled.div`
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 1rem;
   margin: auto;
-  @media (min-width: ${({ theme }) => theme.breakpoints.xs}) {
+  @media (min-width: ${({ theme }) =>
+      (theme as typeof CustomTheme).breakpoints.xs}) {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
 `;
@@ -27,7 +29,9 @@ export const Container = styled.div`
   padding: 1rem;
   margin: auto;
   max-width: 1500px;
-  text-align: ${({ center }) => (center ? "center" : "left")};
+  &[data-center]: {
+    text-align: center;
+  }
 `;
 
 export const PosterCover = styled.div`

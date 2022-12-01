@@ -4,7 +4,7 @@ import { Global } from "@emotion/react";
 import globalStyles from "../components/styled/global";
 
 class MyDocument extends Document {
-  static async getInitialProps(ctx) {
+  static async getInitialProps(ctx: any) {
     const initialProps = await Document.getInitialProps(ctx);
     const styles = CssBaseline.flush();
 

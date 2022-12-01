@@ -2,10 +2,11 @@ import styled from "@emotion/styled";
 import { Text } from "@geist-ui/core";
 import Link from "next/link";
 import React from "react";
+import CustomTheme from "../config/theme";
 
 const Navbar = styled.div`
-  height: ${({ theme }) => theme.navbarHeight};
-  background-color: ${({ theme }) => theme.blue1};
+  height: ${({ theme }) => (theme as typeof CustomTheme).navbarHeight};
+  background-color: ${({ theme }) => (theme as typeof CustomTheme).blue1};
   display: flex;
   align-items: center;
   justify-content: center;
