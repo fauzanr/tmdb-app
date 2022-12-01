@@ -1,13 +1,22 @@
 import styled from "@emotion/styled";
-import { Button, Tabs, Text, Grid, Rating, Badge } from "@geist-ui/core";
+import {
+  Tabs,
+  Text,
+  Grid,
+  Rating,
+  Badge,
+  Note,
+  Pagination,
+} from "@geist-ui/core";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { DISCOVER_URL, IMAGE_URL, LATEST_MOVIES_URL } from "../api";
+import useSWR, { SWRConfig } from "swr";
+import { IMAGE_URL, MOVIES_URL } from "../api";
 import { Card, Container, Grid as GridContainer } from "../components/styled";
-import { MovieRecord, PaginationResponse } from "../types";
+import { MovieListTypes, MovieRecord, PaginationResponse } from "../types";
 
 const CardRelative = styled(Card)`
   position: relative;
@@ -15,7 +24,7 @@ const CardRelative = styled(Card)`
 
 const PosterCover = styled.div`
   flex: none;
-  background: lightgray;
+  background: #ababab;
   position: relative;
   aspect-ratio: 6 / 9;
 `;
@@ -58,35 +67,60 @@ const SORT_LIST = [
   { value: "vote_count.desc", text: "Highest Rating" },
 ];
 
+const DEFAULT_SORT: typeof MovieListTypes[number] = "upcoming";
+
+const MOVIES_TYPES = MovieListTypes.map((type) => ({
+  value: type,
+  text: type.replace("_", " "),
+}));
+
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-  const { sort } = query;
-  const moviesRes = await fetch(
-    !sort
-      ? LATEST_MOVIES_URL
-      : DISCOVER_URL(Array.isArray(sort) ? sort[0] : sort)
-  );
+  const moviesRes = await fetch(MOVIES_URL());
   const movies: MovieRecord[] = await moviesRes.json();
 
   return {
     props: {
+      fallback: {
+        [`/api/discover?sort=${DEFAULT_SORT}&page=1`]: movies,
+      },
       movies,
-      sort: sort || "release_date.desc",
     },
   };
 };
 
-const Home = ({
-  movies,
-  sort,
-}: {
-  movies: PaginationResponse<MovieRecord[]>;
-  sort?: string | string[];
-}) => {
+const CardLoading = () => {
+  return (
+    <GridContainer>
+      {Array.from({ length: 20 }).map((_, idx) => (
+        <Card key={idx}>
+          <PosterCover>
+            <div style={{ width: 274, height: 410 }}></div>
+          </PosterCover>
+        </Card>
+      ))}
+    </GridContainer>
+  );
+};
+
+const Home = () => {
   const router = useRouter();
   const [hoverId, setHoverId] = useState<number | string | null>(null);
+  const [pagination, setPagination] = useState<{ page: number; total: number }>(
+    { page: 1, total: 0 }
+  );
+  const [sort, setSort] = useState<typeof MovieListTypes[number]>(DEFAULT_SORT);
 
-  const handleChangeSort = (sort: string | string[]) => {
-    router.push({ query: { sort } });
+  const { data: movies, isValidating } = useSWR<
+    PaginationResponse<MovieRecord[]>
+  >(`/api/discover?sort=${sort}&page=${pagination.page}`, {
+    onSuccess(data) {
+      setPagination({ page: data.page || 1, total: data.total_pages });
+    },
+  });
+
+  const handleChangeSort = (sort: string) => {
+    setPagination((prev) => ({ ...prev, page: 1 }));
+    setSort(sort as typeof MovieListTypes[number]);
   };
 
   return (
@@ -102,9 +136,10 @@ const Home = ({
           <Tabs
             value={sort ? (Array.isArray(sort) ? sort[0] : sort) : undefined}
             align="center"
+            mb={1}
             onChange={handleChangeSort}
           >
-            {SORT_LIST.map((sort) => (
+            {MOVIES_TYPES.map((sort) => (
               <Tabs.Item
                 key={sort.value}
                 value={sort.value}
@@ -113,50 +148,81 @@ const Home = ({
             ))}
           </Tabs>
 
-          <GridContainer>
-            {movies.results.map((movie) => (
-              <CardRelative
-                key={`${movie.id}_${movie.title}`}
-                onMouseEnter={() => setHoverId(movie.id)}
-                onMouseLeave={() => setHoverId(null)}
-              >
-                <PosterCover>
-                  <Image
-                    src={IMAGE_URL(movie.poster_path || movie.backdrop_path)}
-                    fill
-                    objectFit="cover"
-                    alt={movie.title}
-                  />
-                </PosterCover>
-                <BlurBg data-active={hoverId === movie.id}>
-                  <Text b>{movie.title}</Text>
-                  <Text small>{movie.release_date}</Text>
-                  <Grid.Container gap={1} wrap="nowrap" mt={1}>
-                    <Grid>
-                      <Rating
-                        locked={true}
-                        value={Math.ceil(movie.vote_average) / 2}
-                        type="warning"
+          {isValidating ? (
+            <CardLoading />
+          ) : !movies?.results ? (
+            <Container>
+              <Note type="error" label="error" filled>
+                Something went wrong.
+              </Note>
+            </Container>
+          ) : (
+            <>
+              <GridContainer>
+                {movies?.results.map((movie) => (
+                  <CardRelative
+                    key={`${movie.id}_${movie.title}`}
+                    onMouseEnter={() => setHoverId(movie.id)}
+                    onMouseLeave={() => setHoverId(null)}
+                  >
+                    <PosterCover>
+                      <Image
+                        src={IMAGE_URL(
+                          movie.poster_path || movie.backdrop_path
+                        )}
+                        fill
+                        objectFit="cover"
+                        alt={movie.title}
                       />
-                    </Grid>
-                    <Grid>
-                      <Badge type="secondary">{movie.vote_average}</Badge>
-                    </Grid>
-                  </Grid.Container>
-                </BlurBg>
-              </CardRelative>
-            ))}
-          </GridContainer>
+                    </PosterCover>
+                    <BlurBg data-active={hoverId === movie.id}>
+                      <Text b>{movie.title}</Text>
+                      <Text small>{movie.release_date}</Text>
+                      <Grid.Container gap={1} wrap="nowrap" mt={1}>
+                        <Grid>
+                          <Rating
+                            locked={true}
+                            value={Math.ceil(movie.vote_average) / 2}
+                            type="warning"
+                          />
+                        </Grid>
+                        <Grid>
+                          <Badge type="secondary">{movie.vote_average}</Badge>
+                        </Grid>
+                      </Grid.Container>
+                    </BlurBg>
+                  </CardRelative>
+                ))}
+              </GridContainer>
 
-          <Grid.Container justify="center" mt={2}>
-            <Grid>
-              <Button type="success">Load More</Button>
-            </Grid>
-          </Grid.Container>
+              <Grid.Container justify="center" mt={2}>
+                <Grid>
+                  <Pagination
+                    limit={5}
+                    count={pagination.total}
+                    page={pagination.page}
+                    initialPage={pagination.page}
+                    onChange={(newPage) =>
+                      newPage !== pagination.page &&
+                      setPagination((prev) => ({ ...prev, page: newPage }))
+                    }
+                  />
+                </Grid>
+              </Grid.Container>
+            </>
+          )}
         </Container>
       </main>
     </>
   );
 };
 
-export default Home;
+const Page = ({ fallback }: { fallback: { [key: string]: any } }) => {
+  return (
+    <SWRConfig value={{ fallback }}>
+      <Home />
+    </SWRConfig>
+  );
+};
+
+export default Page;

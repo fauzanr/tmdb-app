@@ -58,3 +58,5 @@ export interface PaginationResponse<T> {
   total_pages: number;
   total_results: number;
 }
+
+export const MovieListTypes = ["upcoming", "popular", "top_rated"] as const;
